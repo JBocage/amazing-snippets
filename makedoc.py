@@ -25,16 +25,22 @@ class DocParser():
     IGNORED_MD_FILES = [
         'README.md'
     ]
+    IGNORED_DIRS = ['__pycache__']
+    MAX_DIR_SIZE = 20 # files
+    IGNORE_MARKER = 'autodoc.ignore'
 
     def __init__(self,
                  path:pathlib.Path,
-                 ignored_dirs=[]):
+                 ignored_dirs=[],
+                 ):
         self.name = path.name
         self.is_dir = path.is_dir()
         self.is_file = path.is_file()
         self.path = path.absolute()
         self.ignored = False
-        self.ignored_dirs = ignored_dirs
+        self.ignore_in_doc = False
+        self.ignore_in_struct = False
+        self.ignored_dirs = ignored_dirs + self.IGNORED_DIRS
 
         self.children = []
 
@@ -55,7 +61,12 @@ class DocParser():
             for fname in os.listdir(self.path):
                 if not fname in self.ignored_dirs:
                     child = DocParser(self.path.joinpath(fname))
-                    if not child.ignored:
+                    if child.is_dir:
+                        if len(os.listdir(child.path)) > self.MAX_DIR_SIZE or self.IGNORE_MARKER in os.listdir(child.path):
+                            child.ignored = True
+                            child.ignore_in_doc = True
+                            child.ignore_in_struct = True
+                    if not child.ignore_in_struct:
                         if child.is_dir:
                             dir_children.append(child)
                         elif child.is_file:
@@ -65,21 +76,26 @@ class DocParser():
             self.children = dir_children + file_children
 
     def structure_warning(self, warning_message:str):
-        return '[W]' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + warning_message
+        return '        [W]' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + warning_message
 
     def structure_error(self, error_message:str):
-        return '[E] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + error_message
+        return '    [E] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + error_message
 
     def structure_info(self, info_message:str):
-        return '[I] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + info_message
+        return '            [I] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + info_message
 
     def _parse_doc(self):
         if self.is_dir:
             self._parse_dirdoc()
         elif self.is_file:
-            if re.search(r'\.py', self.name):
-                self._parse_as_py_file()
-            elif re.search(r'\.md', self.name):
+            if re.search(r'\.py$', self.name):
+                try:
+                    self._parse_as_py_file()
+                except:
+                    self.process_warnings.append(self.structure_error(
+                        'The file could not be parsed. It has been ignored.'
+                    ))
+            elif re.search(r'\.md$', self.name):
                 self._parse_as_md_file()
             else:
                 # self.ignored = True
@@ -87,7 +103,8 @@ class DocParser():
                     'The file was ignored because its extenstion was not recognised.'
                 ))
         else:
-            self.ignored = True
+            self.ignore_in_struct = True
+            self.ignore_in_doc = True
             self.process_warnings.append(self.structure_error(
                 'The file was ignored because it was not recognised either as a file nor a directory.'
             ))
@@ -118,15 +135,26 @@ class DocParser():
 
     def _parse_as_md_file(self):
         if self.name in [self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES:
-            self.ignored = True
+            self.ignore_in_doc = True
+            self.ignore_in_struct = True
             self.process_warnings.append(self.structure_info(
                 'The file was ignored as it is part of the whitelist defined by "[self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES"'
             ))
         with open(self.path, "r") as f:
-            self.md_strings = f.readlines()
-            if not self.md_strings:
+            lines = f.readlines()
+            if not lines:
+                self.ignore_in_doc = True
+                self.ignore_in_struct = False
                 self.process_warnings.append(self.structure_warning(
-                    'The file was empty. The doc remains empty'
+                    'The file was ignored because it was empty.'
+                ))
+            elif lines[0] != '\n':
+                self.md_strings = lines
+            else:
+                self.ignore_in_doc = True
+                self.ignore_in_struct = False
+                self.process_warnings.append(self.structure_info(
+                    'The file was ignored because it started with an empty line.'
                 ))
 
     def _parse_dirdoc(self):
@@ -187,9 +215,37 @@ class DocParser():
                 repr += CROSSDIR + child.__repr__()
         return repr
 
+    def get_file_struct(self, depth = np.inf):
+        FCROSS = '└── '
+        CROSSDIR = '├── '
+        VERTLINE = '│   '
+        # FCROSS = 'L__ '
+        # CROSSDIR = '+-- '
+        # VERTLINE = '|   '
+        repr = self.name + self.is_dir*'/' + '\n'
+        if depth:
+            for idx, child in enumerate(self.children):
+                child_repr = child.get_file_struct(depth=depth-1).split('\n')
+                new_child_repr = []
+                if idx == len(self.children) - 1:
+                    VERTLINE = '    '
+                    CROSSDIR = FCROSS
+                if child.is_dir:
+                    mrkr = 1
+                    for line in child_repr:
+                        if line:
+                            new_child_repr.append(mrkr*CROSSDIR + (1-mrkr)*VERTLINE + line + '\n')
+                            mrkr = 0
+                    repr += ''.join(new_child_repr)
+                elif child.is_file:
+                    repr += CROSSDIR + child.__repr__()
+        return repr
+
     def _get_doc(self,
                  doc_depth = 0,
                  block_quote_content = False):
+        if self.ignore_in_doc:
+            return []
         doc_lines = []
         doc_lines.append('#' * (1+doc_depth) + ' ' + self.name + '\n')
         if block_quote_content:
@@ -224,16 +280,16 @@ class DocParser():
     def makedoc(self,
                 recurse = False,
                 doc_depth = 1,
-                verbose = False,
+                file_structure_depth = 4,
+                verbose = True,
                 generate_log_report = False,
                 first_call=True,
                 update_README = False):
-        log_report = []
         if verbose and first_call:
-            print('Starting the makedoc process')
+            print(f'Starting the makedoc process from {self.path._str}')
         if self.is_dir:
             outfile_path = self.path.joinpath(self.OUTPUTFILE)
-            file_strucure = '```\n' + self.__repr__() + '```\n'
+            file_strucure = '```\n' + self.get_file_struct(depth=file_structure_depth) + '```\n'
             file_doc_lines = self._get_doc()
             with open(outfile_path, 'w+') as f:
                 for l in file_doc_lines:
@@ -263,7 +319,9 @@ class DocParser():
             for child in self.children:
                 child.makedoc(recurse=True,
                               doc_depth=doc_depth,
-                              first_call=False)
+                              first_call=False,
+                              verbose=False,
+                              file_structure_depth=file_structure_depth)
         if self.is_dir and update_README and ('README.md' in os.listdir(self.path)):
             with open(self.path.joinpath(self.OUTPUTFILE), 'r') as autodoc_file:
                 with open(self.path.joinpath('README.md'), 'w+') as README_file:
@@ -275,13 +333,16 @@ class DocParser():
                 print(warning)
             print("Makedoc process finished. The doc is ready.")
 
-dc = DocParser(root_path,
+source_parser = DocParser(root_path,
                ignored_dirs=['venv',
                              '.git',
                              '.idea',
-                             ])
-dc.makedoc(recurse=True,
-           verbose=True,
-           generate_log_report=True,
-           update_README=True,
-           doc_depth=1)
+                             ],
+               )
+source_parser.makedoc(update_README=True,
+                      )
+
+recursive_parser = DocParser(root_path.joinpath('src',),
+                            )
+recursive_parser.makedoc(recurse=True,
+                         verbose=False)
