@@ -1,7 +1,28 @@
 """
 > author: JBocage
 
-This script automatically generates the documentation skeleton for the project
+This script automatically generates the documentation skeleton for the project.
+
+It aims to function from every source directory. It is easy to use it. An sample of what is contained in the file is given here.
+
+```python
+
+root_path = pathlib.Path(os.path.abspath(os.path.join(__file__,'..',)))     # initialise the source path
+
+source_parser = DocParser(root_path,                                        # create the parser
+               ignored_dirs=['venv',
+                             '.git',
+                             '.idea',
+                             ],
+               )
+source_parser.makedoc(update_README=True,                                   # generate the doc
+                      )
+
+recursive_parser = DocParser(root_path.joinpath('src',),                    # another example of parser
+                            )
+recursive_parser.makedoc(recurse=True,                                      # another example of doc generation call
+                         verbose=False)
+```
 """
 
 import pathlib
