@@ -1,5 +1,8 @@
 """
-This code is taken from https://matplotlib.org/stable/gallery/color/named_colors.html
+> source-url: https://matplotlib.org/stable/gallery/color/named_colors.html
+
+This code is taken from the matplotlib website. It plots different color tables
+that are inbuilt in matplotlib.
 """
 
 from matplotlib.patches import Rectangle

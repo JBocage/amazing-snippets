@@ -1,10 +1,14 @@
 """
+> author: JBocage
+
 This script automatically generates the documentation skeleton for the project
 """
 
 import pathlib
 import os
 import re
+import time
+import datetime
 import numpy as np
 
 root_path = pathlib.Path(os.path.abspath(os.path.join(__file__,
@@ -61,13 +65,13 @@ class DocParser():
             self.children = dir_children + file_children
 
     def structure_warning(self, warning_message:str):
-        return '[W] ' + self.path._str + ' : ' + warning_message
+        return '[W]' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + warning_message
 
     def structure_error(self, error_message:str):
-        return '[E] ' + self.path._str + ' : ' + error_message
+        return '[E] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + error_message
 
     def structure_info(self, info_message:str):
-        return '[I] ' + self.path._str + ' : ' + info_message
+        return '[I] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + info_message
 
     def _parse_doc(self):
         if self.is_dir:
@@ -78,7 +82,7 @@ class DocParser():
             elif re.search(r'\.md', self.name):
                 self._parse_as_md_file()
             else:
-                self.ignored = True
+                # self.ignored = True
                 self.process_warnings.append(self.structure_warning(
                     'The file was ignored because its extenstion was not recognised.'
                 ))
@@ -183,21 +187,31 @@ class DocParser():
                 repr += CROSSDIR + child.__repr__()
         return repr
 
-    def _get_doc(self, doc_depth = 0):
+    def _get_doc(self,
+                 doc_depth = 0,
+                 block_quote_content = False):
         doc_lines = []
         doc_lines.append('#' * (1+doc_depth) + ' ' + self.name + '\n')
-        doc_lines += self.md_strings
-        doc_lines.append('\n')
+        if block_quote_content:
+            for line in self.md_strings:
+                doc_lines.append('>' + line)
+            doc_lines.append('\n---\n')
+        else:
+            doc_lines += self.md_strings
+        # doc_lines.append('\n---\n')
         return doc_lines
 
-    def _get_children_doc(self, doc_depth = 0, max_depth = np.inf):
+    def _get_children_doc(self,
+                          doc_depth = 0,
+                          max_depth = np.inf):
         doc_lines = []
         if doc_depth < max_depth+1:
             if doc_depth > 0:
-                doc_lines+= self._get_doc(doc_depth=doc_depth)
+                doc_lines+= self._get_doc(doc_depth=doc_depth,
+                                          block_quote_content=True)
             if self.is_dir:
                 for child in self.children:
-                    doc_lines += child._get_children_doc(doc_depth = doc_depth+1, max_depth=max_depth)
+                    doc_lines += child._get_children_doc(doc_depth=doc_depth + 1, max_depth=max_depth)
         return doc_lines
 
     def get_all_warnings(self):
@@ -212,7 +226,8 @@ class DocParser():
                 doc_depth = 1,
                 verbose = False,
                 generate_log_report = False,
-                first_call=True):
+                first_call=True,
+                update_README = False):
         log_report = []
         if verbose and first_call:
             print('Starting the makedoc process')
@@ -223,24 +238,50 @@ class DocParser():
             with open(outfile_path, 'w+') as f:
                 for l in file_doc_lines:
                     f.write(l)
-                f.write('\n')
+                f.write('\n<hr style="border:2px solid gray"> </hr>\n\n')
                 f.write('## Structure \n')
                 f.write(file_strucure)
+                f.write('\n<hr style="border:2px solid gray"> </hr>\n\n')
                 children_doc_lines = self._get_children_doc(max_depth=doc_depth)
                 for l in children_doc_lines:
                     f.write(l)
-        if verbose:
-            for warning in self.get_all_warnings():
-                print(warning)
+                f.write(f'\n\n\n\n<sub>This doc was automatically generated on {datetime.datetime.now().strftime(" %D %H:%M:%S ")}')
+        logs = self.get_all_warnings()
+        if generate_log_report and first_call:
+            if not 'logs' in os.listdir(self.path):
+                log_folder_path = self.path.joinpath('logs')
+                log_folder_path.mkdir()
+                self.process_warnings.append(self.structure_warning(
+                    'The logs folder did not exist. It was created at ' + log_folder_path._str
+                ))
+            log_report_path = self.path.joinpath('logs/autodoc_gen_report.log')
+            with open(log_report_path, "w+") as f:
+                f.write("makedoc_report built on " + datetime.datetime.now().strftime("%D %H:%M:%S \n\n"))
+                for logline in logs:
+                    f.write(logline + '\n')
         if recurse:
             for child in self.children:
                 child.makedoc(recurse=True,
                               doc_depth=doc_depth,
                               first_call=False)
+        if self.is_dir and update_README and ('README.md' in os.listdir(self.path)):
+            with open(self.path.joinpath(self.OUTPUTFILE), 'r') as autodoc_file:
+                with open(self.path.joinpath('README.md'), 'w+') as README_file:
+                    lines = autodoc_file.readlines()
+                    for l in lines:
+                        README_file.write(l)
+        if verbose:
+            for warning in logs:
+                print(warning)
+            print("Makedoc process finished. The doc is ready.")
 
 dc = DocParser(root_path,
                ignored_dirs=['venv',
                              '.git',
                              '.idea',
                              ])
-dc.makedoc(verbose=True)
+dc.makedoc(recurse=True,
+           verbose=True,
+           generate_log_report=True,
+           update_README=True,
+           doc_depth=1)
