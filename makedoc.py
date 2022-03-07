@@ -51,7 +51,7 @@ class DocParser():
     MAX_DIR_SIZE = 20 # files
     IGNORE_MARKER = 'autodoc.ignore'
 
-    VERSION = '1.1.0'
+    VERSION = '1.1.1'
 
     MAKEDOC_DIR_PATH = pathlib.Path(os.path.abspath(os.path.join(__file__,
                                                             '../.makedoc')))
@@ -60,6 +60,7 @@ class DocParser():
     def __init__(self,
                  path:pathlib.Path,
                  ignored_dirs=[],
+                 ignore___init__doc=True
                  ):
         self._init_makedoc_dir()
 
@@ -70,6 +71,7 @@ class DocParser():
         self.ignored = False
         self.ignore_in_doc = False
         self.ignore_in_struct = False
+        self.ignore___init__doc = ignore___init__doc
 
         self.ignored_dirs = ignored_dirs + self.IGNORED_DIRS
         self._update_ignored_dirs()
@@ -171,6 +173,9 @@ class DocParser():
             ))
 
     def _parse_as_py_file(self):
+        if self.ignore___init__doc and self.name == "__init__.py":
+            self.ignore_in_doc = True
+            self.ignore_in_struct = False
         with open(self.path, "r") as f:
             lines = f.readlines()
             info_began = False
