@@ -10,9 +10,10 @@ my projects and internet research !
 ```
 amazing-snippets/
 ├── logs/
-│   └── autodoc_gen_report.log
 ├── src/
 │   ├── colors/
+│   │   ├── colorbars/
+│   │   │   └── discrete_interval_colorbar.py
 │   │   ├── access_xkcd.py
 │   │   └── display_mpl_colors.py
 │   ├── markdown/
@@ -63,4 +64,4 @@ amazing-snippets/
 
 
 
-<sub>This doc was automatically generated on  03/04/22 18:42:27 
+<sub>This doc was automatically generated with makedoc v1.0.0 on  03/07/22 15:12:29 

@@ -46,14 +46,23 @@ class DocParser():
     IGNORED_MD_FILES = [
         'README.md'
     ]
-    IGNORED_DIRS = ['__pycache__']
+    IGNORED_DIRS = ['__pycache__',
+                    '.makedoc']
     MAX_DIR_SIZE = 20 # files
     IGNORE_MARKER = 'autodoc.ignore'
+
+    VERSION = '1.1.0'
+
+    MAKEDOC_DIR_PATH = pathlib.Path(os.path.abspath(os.path.join(__file__,
+                                                            '../.makedoc')))
+    IGNORED_DIRS_FILENAME = 'ignored.mkdc'
 
     def __init__(self,
                  path:pathlib.Path,
                  ignored_dirs=[],
                  ):
+        self._init_makedoc_dir()
+
         self.name = path.name
         self.is_dir = path.is_dir()
         self.is_file = path.is_file()
@@ -61,7 +70,9 @@ class DocParser():
         self.ignored = False
         self.ignore_in_doc = False
         self.ignore_in_struct = False
+
         self.ignored_dirs = ignored_dirs + self.IGNORED_DIRS
+        self._update_ignored_dirs()
 
         self.children = []
 
@@ -75,18 +86,47 @@ class DocParser():
 
         self.type = None
 
+    def _init_makedoc_dir(self):
+        self.MAKEDOC_DIR_PATH.mkdir(exist_ok=True)
+        if not self.IGNORED_DIRS_FILENAME in os.listdir(self.MAKEDOC_DIR_PATH):
+            with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'w+') as f:
+                pass
+
+    def _update_ignored_dirs(self):
+        with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'r') as f:
+            for line in f.readlines():
+                self.ignored_dirs.append(line)
+
+
     def _dig_for_docs(self, maxdepth = np.inf):
         if maxdepth and self.is_dir:
             dir_children = []
             file_children = []
             for fname in os.listdir(self.path):
-                if not fname in self.ignored_dirs:
+                check_fname = not fname in self.ignored_dirs
+                if check_fname:
+                    for igdir in self.ignored_dirs:
+                        predictive_path = self.path.joinpath(fname)
+                        if re.search(igdir + '$', str(predictive_path)):
+                            check_fname = False
+                            self.process_warnings.append(self.structure_info(
+                                f"{fname} was ignored because it is part of the .makedoc/ignored.mkdc file"
+                            ))
+                            break
+                if check_fname:
                     child = DocParser(self.path.joinpath(fname))
                     if child.is_dir:
                         if len(os.listdir(child.path)) > self.MAX_DIR_SIZE or self.IGNORE_MARKER in os.listdir(child.path):
                             child.ignored = True
                             child.ignore_in_doc = True
                             child.ignore_in_struct = True
+                            if self.IGNORE_MARKER in os.listdir(child.path):
+                                os.remove(child.path.joinpath(self.IGNORE_MARKER))
+                                with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'a') as f:
+                                    f.write(child.path._str)
+                                self.process_warnings.append(self.structure_info(
+                                    f"{self.IGNORE_MARKER} found in {child.path._str}. It was removed and ./makedoc/{self.IGNORED_DIRS_FILENAME} was updated"
+                                ))
                     if not child.ignore_in_struct:
                         if child.is_dir:
                             dir_children.append(child)
@@ -322,7 +362,7 @@ class DocParser():
                 children_doc_lines = self._get_children_doc(max_depth=doc_depth)
                 for l in children_doc_lines:
                     f.write(l)
-                f.write(f'\n\n\n\n<sub>This doc was automatically generated on {datetime.datetime.now().strftime(" %D %H:%M:%S ")}')
+                f.write(f'\n\n\n\n<sub>This doc was automatically generated with makedoc v{self.VERSION} on {datetime.datetime.now().strftime(" %D %H:%M:%S ")}')
         logs = self.get_all_warnings()
         if generate_log_report and first_call:
             if not 'logs' in os.listdir(self.path):
@@ -333,7 +373,7 @@ class DocParser():
                 ))
             log_report_path = self.path.joinpath('logs/autodoc_gen_report.log')
             with open(log_report_path, "w+") as f:
-                f.write("makedoc_report built on " + datetime.datetime.now().strftime("%D %H:%M:%S \n\n"))
+                f.write(f"makedoc_report built with makedoc v{self.VERSION} on " + datetime.datetime.now().strftime("%D %H:%M:%S \n\n"))
                 for logline in logs:
                     f.write(logline + '\n')
         if recurse:
@@ -342,13 +382,15 @@ class DocParser():
                               doc_depth=doc_depth,
                               first_call=False,
                               verbose=False,
-                              file_structure_depth=file_structure_depth)
+                              file_structure_depth=file_structure_depth,
+                              update_README=update_README)
         if self.is_dir and update_README and ('README.md' in os.listdir(self.path)):
-            with open(self.path.joinpath(self.OUTPUTFILE), 'r') as autodoc_file:
-                with open(self.path.joinpath('README.md'), 'w+') as README_file:
-                    lines = autodoc_file.readlines()
-                    for l in lines:
-                        README_file.write(l)
+            if 'README.md' in os.listdir(self.path):
+                with open(self.path.joinpath(self.OUTPUTFILE), 'r') as autodoc_file:
+                    with open(self.path.joinpath('README.md'), 'w+') as README_file:
+                        lines = autodoc_file.readlines()
+                        for l in lines:
+                            README_file.write(l)
         if verbose:
             for warning in logs:
                 print(warning)
@@ -361,9 +403,11 @@ source_parser = DocParser(root_path,
                              ],
                )
 source_parser.makedoc(update_README=True,
+                      generate_log_report=True
                       )
 
 recursive_parser = DocParser(root_path.joinpath('src',),
                             )
 recursive_parser.makedoc(recurse=True,
-                         verbose=False)
+                         verbose=False,
+                         update_README=True)
