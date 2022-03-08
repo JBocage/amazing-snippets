@@ -8,12 +8,12 @@ The **src** directory gathers all the snippets of interest.
 src/
 ├── colors/
 │   ├── colorbars/
-│   │   └── discrete_interval_colorbar.py
 │   ├── access_xkcd.py
 │   └── display_mpl_colors.py
 ├── markdown/
 │   └── cheat_sheet_1.md
 └── matplotlib/
+    └── color_bar_integration.py
 ```
 
 <hr style="border:2px solid gray"> </hr>
@@ -40,4 +40,4 @@ src/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.0.0 on  03/07/22 15:12:29 
+<sub>This doc was automatically generated with makedoc v1.1.3 on  03/08/22 08:52:53 

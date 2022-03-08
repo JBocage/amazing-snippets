@@ -13,12 +13,12 @@ amazing-snippets/
 ├── src/
 │   ├── colors/
 │   │   ├── colorbars/
-│   │   │   └── discrete_interval_colorbar.py
 │   │   ├── access_xkcd.py
 │   │   └── display_mpl_colors.py
 │   ├── markdown/
 │   │   └── cheat_sheet_1.md
 │   └── matplotlib/
+│       └── color_bar_integration.py
 └── makedoc.py
 ```
 
@@ -58,10 +58,13 @@ amazing-snippets/
 >recursive_parser.makedoc(recurse=True,                                      # another example of doc generation call
 >                         verbose=False)
 >```
+>
+>For adding figures, you need to put your figure in .makedoc/imgs
+>Then from any script command, you can include it by writing `@img:img_filename` at the beginning of the line
 
 ---
 
 
 
 
-<sub>This doc was automatically generated with makedoc v1.0.0 on  03/07/22 15:12:29 
+<sub>This doc was automatically generated with makedoc v1.1.3 on  03/08/22 08:52:53 
