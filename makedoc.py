@@ -23,10 +23,14 @@ recursive_parser = DocParser(root_path.joinpath('src',),                    # an
 recursive_parser.makedoc(recurse=True,                                      # another example of doc generation call
                          verbose=False)
 ```
+
+For adding figures, you need to put your figure in .makedoc/imgs
+Then from any script command, you can include it by writing `@img:img_filename` at the beginning of the line
 """
 
 import pathlib
 import os
+import shutil
 import re
 import time
 import datetime
@@ -51,23 +55,30 @@ class DocParser():
     MAX_DIR_SIZE = 20 # files
     IGNORE_MARKER = 'autodoc.ignore'
 
-    VERSION = '1.1.1'
+    VERSION = '1.1.3'
 
     MAKEDOC_DIR_PATH = pathlib.Path(os.path.abspath(os.path.join(__file__,
                                                             '../.makedoc')))
+    ROOT_PATH = pathlib.Path(os.path.abspath(os.path.join(__file__,
+                                              '..',
+                                              )))
     IGNORED_DIRS_FILENAME = 'ignored.mkdc'
 
     def __init__(self,
                  path:pathlib.Path,
                  ignored_dirs=[],
-                 ignore___init__doc=True
+                 ignore___init__doc=True,
+                 initialiser=True,
+                 repack=False
                  ):
         self._init_makedoc_dir()
 
+        self.is_first = initialiser
         self.name = path.name
         self.is_dir = path.is_dir()
         self.is_file = path.is_file()
         self.path = path.absolute()
+        self.repack=repack
         self.ignored = False
         self.ignore_in_doc = False
         self.ignore_in_struct = False
@@ -83,13 +94,17 @@ class DocParser():
 
         self.process_warnings = []
 
+        self.unpack_doc()
         self._parse_doc()
         self._dig_for_docs(maxdepth=3)
 
-        self.type = None
+        if repack and self.is_first:
+            print(f"erase_autodoc called from {self.path}")
+            self._erase_autodoc()
 
     def _init_makedoc_dir(self):
         self.MAKEDOC_DIR_PATH.mkdir(exist_ok=True)
+        self.MAKEDOC_DIR_PATH.joinpath('imgs').mkdir(exist_ok=True)
         if not self.IGNORED_DIRS_FILENAME in os.listdir(self.MAKEDOC_DIR_PATH):
             with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'w+') as f:
                 pass
@@ -99,6 +114,28 @@ class DocParser():
             for line in f.readlines():
                 self.ignored_dirs.append(line)
 
+    def _get_partial_path(self):
+        fullpath = self.path.__str__()
+        root_path = self.ROOT_PATH.__str__()
+        partial_path = fullpath[len(root_path):]
+        return  partial_path
+
+    def pack_doc(self):
+        if self.is_dir:
+            dest_dir_path = self.path.joinpath(self.MAKEDOC_DIR_PATH, 'packed_doc/'+self._get_partial_path())
+            dest_dir_path.mkdir(parents=True,
+                                exist_ok=True)
+            shutil.copyfile(self.path.joinpath(self.DIRDOCNAME), dest_dir_path.joinpath(self.DIRDOCNAME))
+            for child in self.children:
+                child.pack_doc()
+        self._erase_autodoc()
+
+    def unpack_doc(self):
+        if self.is_dir:
+            dirdoc_path = self.path.joinpath(self.MAKEDOC_DIR_PATH,
+                                             'packed_doc/'+self._get_partial_path()+'/'+self.DIRDOCNAME)
+            if dirdoc_path.exists():
+                shutil.copyfile(dirdoc_path, self.path.joinpath(self.DIRDOCNAME))
 
     def _dig_for_docs(self, maxdepth = np.inf):
         if maxdepth and self.is_dir:
@@ -116,7 +153,8 @@ class DocParser():
                             ))
                             break
                 if check_fname:
-                    child = DocParser(self.path.joinpath(fname))
+                    child = DocParser(self.path.joinpath(fname),
+                                      initialiser=False)
                     if child.is_dir:
                         if len(os.listdir(child.path)) > self.MAX_DIR_SIZE or self.IGNORE_MARKER in os.listdir(child.path):
                             child.ignored = True
@@ -197,7 +235,23 @@ class DocParser():
                 self.process_warnings.append(self.structure_warning(
                     'There is not beginning comment to this file. The doc remains empty.'
                 ))
-        self.md_strings = self.docstrings.copy()
+        for line in self.docstrings:
+            if re.search(r'(?<=@img:)\w+', line):
+                img_name = re.search(r'(?<=@img:)\w+\.\w+', line)[0]
+                img_dir_path=self.MAKEDOC_DIR_PATH.joinpath('imgs/')
+                print(img_name)
+                print(os.listdir(img_dir_path))
+                if img_name in os.listdir(img_dir_path):
+                    print(f'found {img_name}')
+                    img_path = img_dir_path.joinpath(img_name)
+                    # self.md_strings.append(f'![imgtest]({img_path.__str__()})\n')
+                    self.md_strings.append(f'<img src="{img_path.__str__()}" alt="drawing" width="400"/>\n')
+                else:
+                    self.process_warnings.append(self.structure_error(
+                        f'Image named {img_name} was not found in {img_dir_path}.'
+                    ))
+            else:
+                self.md_strings.append(line)
 
     def _parse_as_md_file(self):
         if self.name in [self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES:
@@ -396,23 +450,23 @@ class DocParser():
                         lines = autodoc_file.readlines()
                         for l in lines:
                             README_file.write(l)
+        if self.repack:
+            self._erase_autodoc()
         if verbose:
             for warning in logs:
                 print(warning)
             print("Makedoc process finished. The doc is ready.")
 
-source_parser = DocParser(root_path,
-               ignored_dirs=['venv',
-                             '.git',
-                             '.idea',
-                             ],
-               )
-source_parser.makedoc(update_README=True,
-                      generate_log_report=True
-                      )
+if __name__ == '__main__':
 
-recursive_parser = DocParser(root_path.joinpath('src',),
-                            )
-recursive_parser.makedoc(recurse=True,
-                         verbose=False,
-                         update_README=True)
+    source_parser = DocParser(root_path,
+                   ignored_dirs=['venv',
+                                 '.git',
+                                 '.idea',
+                                 ],
+                              repack=True
+                   )
+    source_parser.makedoc(update_README=True,
+                          generate_log_report=True,
+                          recurse=True
+                          )
