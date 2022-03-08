@@ -55,7 +55,7 @@ class DocParser():
     MAX_DIR_SIZE = 20 # files
     IGNORE_MARKER = 'autodoc.ignore'
 
-    VERSION = '1.1.3'
+    VERSION = '1.1.4'
 
     MAKEDOC_DIR_PATH = pathlib.Path(os.path.abspath(os.path.join(__file__,
                                                             '../.makedoc')))
@@ -63,6 +63,32 @@ class DocParser():
                                               '..',
                                               )))
     IGNORED_DIRS_FILENAME = 'ignored.mkdc'
+
+    class Log_message():
+
+        WARNING = 3
+        INFO = 2
+        ERROR = 1
+
+        def __init__(self,
+                     type,
+                     path,
+                     message):
+            if not type in [self.WARNING, self.INFO, self.ERROR]:
+                raise ValueError(f'Specified type is not valid.')
+            self.type = type
+            self.path = path
+            self.time = datetime.datetime.now()
+            self.message = message
+
+        def __repr__(self):
+            if self.type == self.ERROR:
+                token = '[E]'
+            elif self.type == self.WARNING:
+                token = '[W]'
+            else:
+                token = '[I]'
+            return token + self.time.strftime(' %D %H:%M:%S at ' + self.path._str + ' : ') + self.message
 
     def __init__(self,
                  path:pathlib.Path,
@@ -93,13 +119,13 @@ class DocParser():
         self.md_strings = []
 
         self.process_warnings = []
+        self.logs = []
 
         self.unpack_doc()
         self._parse_doc()
         self._dig_for_docs(maxdepth=3)
 
         if repack and self.is_first:
-            print(f"erase_autodoc called from {self.path}")
             self._erase_autodoc()
 
     def _init_makedoc_dir(self):
@@ -148,9 +174,7 @@ class DocParser():
                         predictive_path = self.path.joinpath(fname)
                         if re.search(igdir + '$', str(predictive_path)):
                             check_fname = False
-                            self.process_warnings.append(self.structure_info(
-                                f"{fname} was ignored because it is part of the .makedoc/ignored.mkdc file"
-                            ))
+                            self.log_info(f"{fname} was ignored because it is part of the .makedoc/ignored.mkdc file")
                             break
                 if check_fname:
                     child = DocParser(self.path.joinpath(fname),
@@ -164,9 +188,7 @@ class DocParser():
                                 os.remove(child.path.joinpath(self.IGNORE_MARKER))
                                 with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'a') as f:
                                     f.write(child.path._str)
-                                self.process_warnings.append(self.structure_info(
-                                    f"{self.IGNORE_MARKER} found in {child.path._str}. It was removed and ./makedoc/{self.IGNORED_DIRS_FILENAME} was updated"
-                                ))
+                                self.log_warning(f"{self.IGNORE_MARKER} found in {child.path._str}. It was removed and ./makedoc/{self.IGNORED_DIRS_FILENAME} was updated")
                     if not child.ignore_in_struct:
                         if child.is_dir:
                             dir_children.append(child)
@@ -185,6 +207,21 @@ class DocParser():
     def structure_info(self, info_message:str):
         return '            [I] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + info_message
 
+    def log_warning(self, message):
+        self.logs.append(self.Log_message(self.Log_message.WARNING,
+                                          self.path,
+                                          message))
+
+    def log_info(self, message):
+        self.logs.append(self.Log_message(self.Log_message.INFO,
+                                          self.path,
+                                          message))
+
+    def log_error(self, message):
+        self.logs.append(self.Log_message(self.Log_message.ERROR,
+                                          self.path,
+                                          message))
+
     def _parse_doc(self):
         if self.is_dir:
             self._parse_dirdoc()
@@ -193,22 +230,15 @@ class DocParser():
                 try:
                     self._parse_as_py_file()
                 except:
-                    self.process_warnings.append(self.structure_error(
-                        'The file could not be parsed. It has been ignored.'
-                    ))
+                    self.log_warning('The file could not be parsed. It has been ignored.')
             elif re.search(r'\.md$', self.name):
                 self._parse_as_md_file()
             else:
-                # self.ignored = True
-                self.process_warnings.append(self.structure_warning(
-                    'The file was ignored because its extenstion was not recognised.'
-                ))
+                self.log_warning('The file was ignored because its extenstion was not recognised.')
         else:
             self.ignore_in_struct = True
             self.ignore_in_doc = True
-            self.process_warnings.append(self.structure_error(
-                'The file was ignored because it was not recognised either as a file nor a directory.'
-            ))
+            self.log_warning('The file was ignored because it was not recognised either as a file nor a directory.')
 
     def _parse_as_py_file(self):
         if self.ignore___init__doc and self.name == "__init__.py":
@@ -232,24 +262,16 @@ class DocParser():
                     else:
                         self.docstrings.append(l)
             if not info_began:
-                self.process_warnings.append(self.structure_warning(
-                    'There is not beginning comment to this file. The doc remains empty.'
-                ))
+                self.log_warning('There is not beginning comment to this file. The doc remains empty.')
         for line in self.docstrings:
-            if re.search(r'(?<=@img:)\w+', line):
-                img_name = re.search(r'(?<=@img:)\w+\.\w+', line)[0]
+            if re.search(r'(?<=^@img:)\w+\.w+', line):
+                img_name = re.search(r'(?<=^@img:)\w+\.\w+', line)[0]
                 img_dir_path=self.MAKEDOC_DIR_PATH.joinpath('imgs/')
-                print(img_name)
-                print(os.listdir(img_dir_path))
                 if img_name in os.listdir(img_dir_path):
-                    print(f'found {img_name}')
                     img_path = img_dir_path.joinpath(img_name)
-                    # self.md_strings.append(f'![imgtest]({img_path.__str__()})\n')
                     self.md_strings.append(f'<img src="{img_path.__str__()}" alt="drawing" width="400"/>\n')
                 else:
-                    self.process_warnings.append(self.structure_error(
-                        f'Image named {img_name} was not found in {img_dir_path}.'
-                    ))
+                    self.log_warning(f'Image named {img_name} was not found in {img_dir_path}.')
             else:
                 self.md_strings.append(line)
 
@@ -257,25 +279,19 @@ class DocParser():
         if self.name in [self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES:
             self.ignore_in_doc = True
             self.ignore_in_struct = True
-            self.process_warnings.append(self.structure_info(
-                'The file was ignored as it is part of the whitelist defined by "[self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES"'
-            ))
+            self.log_warning('The file was ignored as it is part of the whitelist defined by "[self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES"')
         with open(self.path, "r") as f:
             lines = f.readlines()
             if not lines:
                 self.ignore_in_doc = True
                 self.ignore_in_struct = False
-                self.process_warnings.append(self.structure_warning(
-                    'The file was ignored because it was empty.'
-                ))
+                self.log_warning('The file was ignored because it was empty.')
             elif lines[0] != '\n':
                 self.md_strings = lines
             else:
                 self.ignore_in_doc = True
                 self.ignore_in_struct = False
-                self.process_warnings.append(self.structure_info(
-                    'The file was ignored because it started with an empty line.'
-                ))
+                self.log_info('The file was ignored because it started with an empty line.')
 
     def _parse_dirdoc(self):
         dirdocpath = self.path.joinpath(self.DIRDOCNAME)
@@ -283,9 +299,7 @@ class DocParser():
             with open(dirdocpath, 'w+') as f:
                 f.write(f'# {self.name}')
                 f.close()
-            self.process_warnings.append(self.structure_info(
-                f'{self.DIRDOCNAME} file did not exist. Created one in {dirdocpath._str}.'
-            ))
+            self.log_info(f'{self.DIRDOCNAME} file did not exist. Created one in {dirdocpath._str}.')
         with open(dirdocpath, "r") as f:
             self.md_strings = f.readlines()
             popindexes = []
@@ -295,9 +309,7 @@ class DocParser():
             for idx in popindexes[::-1]:
                 self.md_strings.pop(idx)
         if not self.md_strings:
-            self.process_warnings.append(self.structure_warning(
-                'The directory doc is empty.'
-            ))
+            self.log_warning('The directory doc is empty.')
 
     def _erase_autodoc(self, recurse=True):
         if self.is_dir:
@@ -314,9 +326,6 @@ class DocParser():
         FCROSS = '└── '
         CROSSDIR = '├── '
         VERTLINE = '│   '
-        # FCROSS = 'L__ '
-        # CROSSDIR = '+-- '
-        # VERTLINE = '|   '
         repr = self.name + '\n'
         for idx, child in enumerate(self.children):
             child_repr = child.__repr__().split('\n')
@@ -339,9 +348,6 @@ class DocParser():
         FCROSS = '└── '
         CROSSDIR = '├── '
         VERTLINE = '│   '
-        # FCROSS = 'L__ '
-        # CROSSDIR = '+-- '
-        # VERTLINE = '|   '
         repr = self.name + self.is_dir*'/' + '\n'
         if depth:
             for idx, child in enumerate(self.children):
@@ -374,7 +380,6 @@ class DocParser():
             doc_lines.append('\n---\n')
         else:
             doc_lines += self.md_strings
-        # doc_lines.append('\n---\n')
         return doc_lines
 
     def _get_children_doc(self,
@@ -390,11 +395,14 @@ class DocParser():
                     doc_lines += child._get_children_doc(doc_depth=doc_depth + 1, max_depth=max_depth)
         return doc_lines
 
-    def get_all_warnings(self):
-        out = self.process_warnings.copy()
+    def get_all_logs(self):
+        out = []
+        self.logs.sort(key=lambda x:x.type)
+        for log in self.logs:
+            out.append(log)
         if self.is_dir:
             for child in self.children:
-                out += child.get_all_warnings()
+                out += child.get_all_logs()
         return out
 
     def makedoc(self,
@@ -422,19 +430,49 @@ class DocParser():
                 for l in children_doc_lines:
                     f.write(l)
                 f.write(f'\n\n\n\n<sub>This doc was automatically generated with makedoc v{self.VERSION} on {datetime.datetime.now().strftime(" %D %H:%M:%S ")}')
-        logs = self.get_all_warnings()
+        logs = self.get_all_logs()
         if generate_log_report and first_call:
-            if not 'logs' in os.listdir(self.path):
-                log_folder_path = self.path.joinpath('logs')
+            log_folder_path = self.MAKEDOC_DIR_PATH.joinpath('logs')
+            if not log_folder_path.exists():
                 log_folder_path.mkdir()
-                self.process_warnings.append(self.structure_warning(
-                    'The logs folder did not exist. It was created at ' + log_folder_path._str
-                ))
-            log_report_path = self.path.joinpath('logs/autodoc_gen_report.log')
+                self.log_info('The logs folder did not exist. It was created at ' + log_folder_path._str)
+            log_report_path = log_folder_path.joinpath('autodoc_gen_report.log')
+
+            infos = [log for log in logs if log.type==self.Log_message.INFO]
+            warnings = [log for log in logs if log.type == self.Log_message.WARNING]
+            errors = [log for log in logs if log.type==self.Log_message.ERROR]
+
             with open(log_report_path, "w+") as f:
-                f.write(f"makedoc_report built with makedoc v{self.VERSION} on " + datetime.datetime.now().strftime("%D %H:%M:%S \n\n"))
-                for logline in logs:
-                    f.write(logline + '\n')
+                f.write(f"makedoc_report built with makedoc v{self.VERSION} on " + datetime.datetime.now().strftime("%D %H:%M:%S \n"))
+                f.write(100*'=' + '\n\n')
+                f.write(f"    ERRORS   : {len(errors)} \n"
+                        f"    WARNINGS : {len(warnings)} \n"
+                        f"    INFOS    : {len(infos)} \n\n"
+                        )
+                f.write(100*'=' + '\n\n')
+                if errors:
+                    for errno, errorlog in enumerate(errors):
+                        f.write(f"    ERROR #{errno+1}/{len(errors)}\n"
+                                f"            - file : {errorlog.path}\n"
+                                f"            - time : {errorlog.time.strftime('%D %H:%M:%S')}\n"
+                                f"        - msg : {errorlog.message} \n\n\n")
+                    f.write(100*'-' + '\n\n')
+                if warnings:
+                    for warno, warlog in enumerate(warnings):
+                        f.write(f"    WARNING #{warno+1}/{len(warnings)}\n"
+                                f"            - file : {warlog.path}\n"
+                                f"            - time : {warlog.time.strftime('%D %H:%M:%S')}\n"
+                                f"        - msg : {warlog.message} \n\n\n")
+                    f.write(100*'-' + '\n\n')
+                if infos:
+                    for infno, inflog in enumerate(infos):
+                        f.write(f"    INFO #{infno+1}/{len(infos)}\n"
+                                f"            - file : {inflog.path}\n"
+                                f"            - time : {inflog.time.strftime('%D %H:%M:%S')}\n"
+                                f"        - msg : {inflog.message} \n\n\n")
+                    f.write(100*'-' + '\n\n')
+                for log in logs:
+                    f.write(log.__str__() + '\n')
         if recurse:
             for child in self.children:
                 child.makedoc(recurse=True,
@@ -464,7 +502,7 @@ if __name__ == '__main__':
                                  '.git',
                                  '.idea',
                                  ],
-                              repack=True
+                    repack=True
                    )
     source_parser.makedoc(update_README=True,
                           generate_log_report=True,
