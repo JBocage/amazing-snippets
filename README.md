@@ -1,20 +1,27 @@
 # amazing-snippets
 
-Welcome to the _amazing snippets_ repository !
+Welcome to the **amazing-snippets** project !
 
-This repository aims to gather all amazing, useful or funny code snippets I could find accros
-my projects and internet research !
+This project aims to gather all intersting, useful of _amazing_ snippets I could  find 
+over the internet and my code during my programmer experience.
+
+This is here to help people keep their recurrent code snippets. 
+
+I hope you will like it !
 <hr style="border:2px solid gray"> </hr>
 
 ## Structure 
 ```
 amazing-snippets/
-├── logs/
 ├── src/
 │   ├── colors/
 │   │   ├── colorbars/
 │   │   ├── access_xkcd.py
 │   │   └── display_mpl_colors.py
+│   ├── files_manip/
+│   │   ├── input/
+│   │   ├── output/
+│   │   └── merge_pdfs.py
 │   ├── markdown/
 │   │   └── cheat_sheet_1.md
 │   └── matplotlib/
@@ -24,14 +31,9 @@ amazing-snippets/
 
 <hr style="border:2px solid gray"> </hr>
 
-## logs
->
->The **logs** directory is here for all logging functions to save their outputs. It is more
->practical that _'amazing'_.
----
 ## src
 >
->The **src** directory gathers all the snippets of interest.
+>The **src** directory basically contains all the code snippets of the project. This is where you will find all the useful stuff !
 ---
 ## makedoc.py
 >> author: JBocage
@@ -67,4 +69,4 @@ amazing-snippets/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.3 on  03/08/22 08:52:53 
+<sub>This doc was automatically generated with makedoc v1.1.5 on  03/11/22 12:52:31 

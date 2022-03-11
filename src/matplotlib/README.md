@@ -1,9 +1,7 @@
 # matplotlib
 
-The **matplotlib** directory contains code snippets for quick and efficient matplotlib
-configuration. 
-
-Ideal for improving your plotting skills !
+Well, the matplotlib website is really furnished, so you should definitely give it a chance. 
+Plus the main part of the script you will find here come from there.
 <hr style="border:2px solid gray"> </hr>
 
 ## Structure 
@@ -24,7 +22,7 @@ matplotlib/
 >
 >A result example is given in the following figure.
 >
-><img src="/home/julien/dev/amazing-snippets/.makedoc/imgs/color_bar_integration_output.png" alt="drawing" width="400"/>
+>@img:color_bar_integration_output.png
 >
 
 ---
@@ -32,4 +30,4 @@ matplotlib/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.3 on  03/08/22 08:52:53 
+<sub>This doc was automatically generated with makedoc v1.1.5 on  03/11/22 12:52:31 
