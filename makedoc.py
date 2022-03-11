@@ -34,6 +34,7 @@ import shutil
 import re
 import time
 import datetime
+import sys
 import numpy as np
 
 root_path = pathlib.Path(os.path.abspath(os.path.join(__file__,
@@ -55,7 +56,7 @@ class DocParser():
     MAX_DIR_SIZE = 20 # files
     IGNORE_MARKER = 'autodoc.ignore'
 
-    VERSION = '1.1.4'
+    VERSION = '1.1.5'
 
     MAKEDOC_DIR_PATH = pathlib.Path(os.path.abspath(os.path.join(__file__,
                                                             '../.makedoc')))
@@ -110,8 +111,9 @@ class DocParser():
         self.ignore_in_struct = False
         self.ignore___init__doc = ignore___init__doc
 
-        self.ignored_dirs = ignored_dirs + self.IGNORED_DIRS
-        self._update_ignored_dirs()
+        self.IGNORED_DIRS += ignored_dirs
+        self.ignored_dirs_and_files = []
+        self._update_ignored_dirs_and_files()
 
         self.children = []
 
@@ -121,12 +123,18 @@ class DocParser():
         self.process_warnings = []
         self.logs = []
 
-        self.unpack_doc()
-        self._parse_doc()
-        self._dig_for_docs(maxdepth=3)
+        self._check_if_ignored()
+        if not self.ignore_in_doc:
+            self.unpack_doc(recurse=False)
+            self._parse_doc()
+        if self.ignore_in_doc and self.ignore_in_struct:
+            pass
+        else:
+            self._dig_for_docs(maxdepth=3)
 
         if repack and self.is_first:
-            self._erase_autodoc()
+            self.pack_doc()
+            # self._erase_autodoc()
 
     def _init_makedoc_dir(self):
         self.MAKEDOC_DIR_PATH.mkdir(exist_ok=True)
@@ -135,16 +143,63 @@ class DocParser():
             with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'w+') as f:
                 pass
 
-    def _update_ignored_dirs(self):
+    def _update_ignored_dirs_and_files(self):
         with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'r') as f:
             for line in f.readlines():
-                self.ignored_dirs.append(line)
+                if line !='\n':
+                    self.ignored_dirs_and_files.append(line)
 
     def _get_partial_path(self):
         fullpath = self.path.__str__()
         root_path = self.ROOT_PATH.__str__()
         partial_path = fullpath[len(root_path):]
         return  partial_path
+
+    def _check_if_ignored(self):
+
+        def check_ign_dir_and_files_list():
+            for path in self.ignored_dirs_and_files:
+                if re.match(path.strip(), self._get_partial_path()):
+                    return True
+                if re.match('/'+path.strip(), self._get_partial_path()):
+                    return True
+                if re.match(path.strip(), self.path._str):
+                    return True
+            return False
+
+        type = 'file' * int(self.is_file) + 'directory' * int(self.is_dir)
+
+        if check_ign_dir_and_files_list():
+            self.ignore_in_doc = True
+            self.ignore_in_struct = True
+            self.log_info(f'The {type} was ignored because it was mentioned in .makedoc/{self.IGNORED_DIRS_FILENAME}')
+        elif self.name in self.IGNORED_DIRS:
+            self.ignore_in_doc = True
+            self.ignore_in_struct = True
+            self.log_info(f'The {type} was ignored because it was mentioned in self.IGNORED_DIRS_FILENAME')
+        else:
+            if self.is_dir:
+                if len(os.listdir(self.path)) > self.MAX_DIR_SIZE:
+                    self.ignore_in_doc = True
+                    self.ignore_in_struct = True
+                    self.log_warning('The directory was ignored because it contained to many files')
+                elif self.IGNORE_MARKER in os.listdir(self.path):
+                    self.ignore_in_doc = True
+                    self.ignore_in_struct = True
+                    self.log_info(f'A {self.IGNORE_MARKER} was found in the directory. The marker was deleted and the .makedoc/{self.IGNORED_DIRS_FILENAME} file was updated.')
+                    os.remove(self.path.joinpath(self.IGNORE_MARKER))
+                    with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'a') as f:
+                        f.write('\n' + self.path._str)
+
+            elif self.is_file:
+                if self.ignore___init__doc and self.name == "__init__.py":
+                    self.ignore_in_doc = True
+                    self.ignore_in_struct = False
+                    self.log_info(f'The file was ignored as it is recognised as a "__init__.py" file.')
+                if self.name in [self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES:
+                    self.ignore_in_doc = True
+                    self.ignore_in_struct = True
+                    self.log_info(f'The file was recognised as a file to ignore.')
 
     def pack_doc(self):
         if self.is_dir:
@@ -156,56 +211,32 @@ class DocParser():
                 child.pack_doc()
         self._erase_autodoc()
 
-    def unpack_doc(self):
+    def unpack_doc(self,
+                   recurse=True):
         if self.is_dir:
             dirdoc_path = self.path.joinpath(self.MAKEDOC_DIR_PATH,
                                              'packed_doc/'+self._get_partial_path()+'/'+self.DIRDOCNAME)
-            if dirdoc_path.exists():
+            if dirdoc_path.exists() and not self.path.joinpath(self.DIRDOCNAME).exists():
                 shutil.copyfile(dirdoc_path, self.path.joinpath(self.DIRDOCNAME))
+            if recurse:
+                for child in self.children:
+                    child.unpack_doc()
 
     def _dig_for_docs(self, maxdepth = np.inf):
         if maxdepth and self.is_dir:
             dir_children = []
             file_children = []
             for fname in os.listdir(self.path):
-                check_fname = not fname in self.ignored_dirs
-                if check_fname:
-                    for igdir in self.ignored_dirs:
-                        predictive_path = self.path.joinpath(fname)
-                        if re.search(igdir + '$', str(predictive_path)):
-                            check_fname = False
-                            self.log_info(f"{fname} was ignored because it is part of the .makedoc/ignored.mkdc file")
-                            break
-                if check_fname:
-                    child = DocParser(self.path.joinpath(fname),
-                                      initialiser=False)
+                child = DocParser(self.path.joinpath(fname),
+                                  initialiser=False)
+                if not child.ignore_in_struct:
                     if child.is_dir:
-                        if len(os.listdir(child.path)) > self.MAX_DIR_SIZE or self.IGNORE_MARKER in os.listdir(child.path):
-                            child.ignored = True
-                            child.ignore_in_doc = True
-                            child.ignore_in_struct = True
-                            if self.IGNORE_MARKER in os.listdir(child.path):
-                                os.remove(child.path.joinpath(self.IGNORE_MARKER))
-                                with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'a') as f:
-                                    f.write(child.path._str)
-                                self.log_warning(f"{self.IGNORE_MARKER} found in {child.path._str}. It was removed and ./makedoc/{self.IGNORED_DIRS_FILENAME} was updated")
-                    if not child.ignore_in_struct:
-                        if child.is_dir:
-                            dir_children.append(child)
-                        elif child.is_file:
-                            file_children.append(child)
+                        dir_children.append(child)
+                    elif child.is_file:
+                        file_children.append(child)
             dir_children.sort(key=lambda x:x.name)
             file_children.sort(key=lambda x:x.name)
             self.children = dir_children + file_children
-
-    def structure_warning(self, warning_message:str):
-        return '        [W]' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + warning_message
-
-    def structure_error(self, error_message:str):
-        return '    [E] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + error_message
-
-    def structure_info(self, info_message:str):
-        return '            [I] ' + datetime.datetime.now().strftime(' %D %H:%M:%S ') + self.path._str + ' : ' + info_message
 
     def log_warning(self, message):
         self.logs.append(self.Log_message(self.Log_message.WARNING,
@@ -223,27 +254,25 @@ class DocParser():
                                           message))
 
     def _parse_doc(self):
-        if self.is_dir:
-            self._parse_dirdoc()
-        elif self.is_file:
-            if re.search(r'\.py$', self.name):
-                try:
-                    self._parse_as_py_file()
-                except:
-                    self.log_warning('The file could not be parsed. It has been ignored.')
-            elif re.search(r'\.md$', self.name):
-                self._parse_as_md_file()
+        if not self.ignore_in_doc:
+            if self.is_dir:
+                self._parse_dirdoc()
+            elif self.is_file:
+                if re.search(r'\.py$', self.name):
+                    try:
+                        self._parse_as_py_file()
+                    except:
+                        self.log_warning('The file could not be parsed. It has been ignored.')
+                elif re.search(r'\.md$', self.name):
+                    self._parse_as_md_file()
+                else:
+                    self.log_warning('The file was ignored because its extenstion was not recognised.')
             else:
-                self.log_warning('The file was ignored because its extenstion was not recognised.')
-        else:
-            self.ignore_in_struct = True
-            self.ignore_in_doc = True
-            self.log_warning('The file was ignored because it was not recognised either as a file nor a directory.')
+                self.ignore_in_struct = True
+                self.ignore_in_doc = True
+                self.log_warning('The file was ignored because it was not recognised either as a file nor a directory.')
 
     def _parse_as_py_file(self):
-        if self.ignore___init__doc and self.name == "__init__.py":
-            self.ignore_in_doc = True
-            self.ignore_in_struct = False
         with open(self.path, "r") as f:
             lines = f.readlines()
             info_began = False
@@ -276,10 +305,6 @@ class DocParser():
                 self.md_strings.append(line)
 
     def _parse_as_md_file(self):
-        if self.name in [self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES:
-            self.ignore_in_doc = True
-            self.ignore_in_struct = True
-            self.log_warning('The file was ignored as it is part of the whitelist defined by "[self.DIRDOCNAME, self.OUTPUTFILE] + self.IGNORED_MD_FILES"')
         with open(self.path, "r") as f:
             lines = f.readlines()
             if not lines:
@@ -304,7 +329,7 @@ class DocParser():
             self.md_strings = f.readlines()
             popindexes = []
             for idx, line in enumerate(self.md_strings):
-                if re.search('# ' + self.name, line):
+                if re.search('^# ' + self.name, line):
                     popindexes.append(idx)
             for idx in popindexes[::-1]:
                 self.md_strings.pop(idx)
@@ -431,6 +456,7 @@ class DocParser():
                     f.write(l)
                 f.write(f'\n\n\n\n<sub>This doc was automatically generated with makedoc v{self.VERSION} on {datetime.datetime.now().strftime(" %D %H:%M:%S ")}')
         logs = self.get_all_logs()
+        logs.sort(key=lambda x:-x.type)
         if generate_log_report and first_call:
             log_folder_path = self.MAKEDOC_DIR_PATH.joinpath('logs')
             if not log_folder_path.exists():
@@ -502,7 +528,7 @@ if __name__ == '__main__':
                                  '.git',
                                  '.idea',
                                  ],
-                    repack=True
+                   repack=True
                    )
     source_parser.makedoc(update_README=True,
                           generate_log_report=True,
