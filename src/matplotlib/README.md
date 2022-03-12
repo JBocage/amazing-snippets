@@ -7,11 +7,16 @@ Plus the main part of the script you will find here come from there.
 ## Structure 
 ```
 matplotlib/
+├── 3D_plots/
+│   └── plot_contour_and_line.py
 └── color_bar_integration.py
 ```
 
 <hr style="border:2px solid gray"> </hr>
 
+## 3D_plots
+
+---
 ## color_bar_integration.py
 >> source-url: https://matplotlib.org/3.5.1/gallery/subplots_axes_and_figures/colorbar_placement.html
 >
@@ -22,7 +27,7 @@ matplotlib/
 >
 >A result example is given in the following figure.
 >
->@img:color_bar_integration_output.png
+><img src="/home/julien/dev/amazing-snippets/.makedoc/imgs/color_bar_integration_output.png" alt="drawing" width="400"/>
 >
 
 ---
@@ -30,4 +35,4 @@ matplotlib/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.5 on  03/11/22 12:52:31 
+<sub>This doc was automatically generated with makedoc v1.1.5 on  03/12/22 19:03:00 
