@@ -293,7 +293,7 @@ class DocParser():
             if not info_began:
                 self.log_warning('There is not beginning comment to this file. The doc remains empty.')
         for line in self.docstrings:
-            if re.search(r'(?<=^@img:)\w+\.w+', line):
+            if re.search(r'(?<=^@img:)\w+\.\w+', line):
                 img_name = re.search(r'(?<=^@img:)\w+\.\w+', line)[0]
                 img_dir_path=self.MAKEDOC_DIR_PATH.joinpath('imgs/')
                 if img_name in os.listdir(img_dir_path):
