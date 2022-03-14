@@ -276,7 +276,10 @@ class DocParser():
         with open(self.path, "r") as f:
             lines = f.readlines()
             info_began = False
+            info_finished = False
+            currently_parsed_snippets = []
             sep_type = None
+            flagged_snippets = {}
             for l in lines:
                 if not info_began:
                     if l == '"""\n':
@@ -285,13 +288,36 @@ class DocParser():
                     elif l == "'''\n":
                         sep_type = "'"
                         info_began = True
-                else:
+                elif not info_finished:
                     if l == 3*sep_type + '\n':
-                        break
+                        info_finished = True
                     else:
                         self.docstrings.append(l)
+                elif info_finished:
+                    snippet_begin_found = re.search(r'(?<=@begin:)\w+', l)
+                    snippet_end_found = re.search(r'(?<=^# @end):{0,1}\w*', l)
+                    if snippet_begin_found:
+                        sn_name = snippet_begin_found[0]
+                        if sn_name in flagged_snippets.keys():
+                            self.log_error(f'{sn_name} region begins more than once in the code.')
+                        else:
+                            flagged_snippets[sn_name] = []
+                        currently_parsed_snippets.append(sn_name)
+                    if snippet_end_found:
+                        end_name = snippet_end_found[0]
+                        if not end_name:
+                            currently_parsed_snippets = []
+                        elif end_name[1:] in currently_parsed_snippets:
+                            currently_parsed_snippets.pop(end_name[1:])
+                        else:
+                            self.log_error(f'Wrong snippet name (got {end_name})')
+                    if currently_parsed_snippets and not (snippet_begin_found or snippet_end_found):
+                        for sname in currently_parsed_snippets:
+                            flagged_snippets[sname].append(l)
             if not info_began:
                 self.log_warning('There is not beginning comment to this file. The doc remains empty.')
+        if flagged_snippets:
+            print(flagged_snippets)
         for line in self.docstrings:
             if re.search(r'(?<=^@img:)\w+\.\w+', line):
                 img_name = re.search(r'(?<=^@img:)\w+\.\w+', line)[0]
@@ -301,6 +327,13 @@ class DocParser():
                     self.md_strings.append(f'<img src="{img_path.__str__()}" alt="drawing" width="400"/>\n')
                 else:
                     self.log_warning(f'Image named {img_name} was not found in {img_dir_path}.')
+            elif re.search(r'(?<=^@snip:)\w+', line):
+                snip_name = re.search(r'(?<=^@snip:)\w+', line)[0]
+                print(snip_name)
+                if snip_name in flagged_snippets:
+                    self.md_strings.append('```python\n')
+                    self.md_strings+=flagged_snippets[snip_name]
+                    self.md_strings.append('```\n')
             else:
                 self.md_strings.append(line)
 
@@ -345,7 +378,6 @@ class DocParser():
             if recurse:
                 for child in self.children:
                     child._erase_autodoc(recurse = True)
-
 
     def __repr__(self):
         FCROSS = '└── '
