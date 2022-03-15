@@ -8,6 +8,7 @@ The **doc** directory contains all the documentation-related files.
 doc/
 └── imgs/
     ├── color_bar_integration_output.png
+    ├── explore_xkcd_colors_output.png
     └── plot_contour_and_line_output.png
 ```
 
@@ -21,4 +22,4 @@ doc/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 12:55:22 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 14:57:19 

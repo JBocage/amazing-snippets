@@ -9,7 +9,9 @@ src/
 ├── colors/
 │   ├── colorbars/
 │   ├── access_xkcd.py
-│   └── display_mpl_colors.py
+│   ├── display_mpl_colors.py
+│   ├── explore_xkcd_colors.py
+│   └── hex_rgb_convertion.py
 ├── files_manip/
 │   ├── input/
 │   ├── output/
@@ -58,4 +60,4 @@ src/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 12:55:22 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 14:57:19 
