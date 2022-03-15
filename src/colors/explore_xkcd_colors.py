@@ -10,7 +10,7 @@ When running this script, the user is asked to input a color name (see exemple b
 Please enter a color name >greenish
 ```
 
-If the color name is in the skcd color dataset,
+If the color name is in the xkcd color dataset (cf https://xkcd.com/color/rgb/),
 the plot is updated to display all the nearest colors in the rgb space that are contained in the xkcd dataset.
 Then the script asks for a new color to be entered.
 
@@ -19,8 +19,6 @@ To end the loop, you can type
 ```
 Please enter a color name >stop
 ```
-
-To stop the process
 
 Exemple output :
 
