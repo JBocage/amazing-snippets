@@ -47,7 +47,7 @@ class DocParser():
                                               '..',
                                               )))
     IGNORED_DIRS_FILENAME = 'ignored.mkdc'
-    IMAGE_DIR = "imgs"
+    IMAGE_DIR = "doc/imgs"
 
     class Log_message():
 
@@ -85,6 +85,7 @@ class DocParser():
                  repack=False,
                  ):
         self._init_makedoc_dir()
+        self._init_useful_dirs()
 
         self.is_first = initialiser
         self.name = path.name
@@ -127,6 +128,9 @@ class DocParser():
         if not self.IGNORED_DIRS_FILENAME in os.listdir(self.MAKEDOC_DIR_PATH):
             with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'w+') as f:
                 pass
+
+    def _init_useful_dirs(self):
+        root_path.joinpath(self.IMAGE_DIR).mkdir(exist_ok=True, parents=True)
 
     def _update_ignored_dirs_and_files(self):
         with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'r') as f:
