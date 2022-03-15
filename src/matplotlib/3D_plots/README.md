@@ -1,5 +1,6 @@
 # 3D_plots
 
+This directory contains that generate quick or complex 3D plots.
 <hr style="border:2px solid gray"> </hr>
 
 ## Structure 
@@ -15,9 +16,20 @@
 >
 >This code is taken from the a github project and shows how to make a contour plot and to plot a line on the surface.
 >
+>The plotting code is
+>
+>```python
+># Plot the contour and the line.
+>ax.contour3D(X, Y, Z,
+>            15,
+>            cmap = 'binary',
+>            )
+>ax.plot3D(xline, yline, zline, linewidth=5, c='b')
+>```
+>
 >A result example is given in the following figure.
 >
-><img src="/home/julien/dev/amazing-snippets/.makedoc/imgs/plot_contour_and_line_output.png" alt="drawing" width="400"/>
+><p align="center"><img src="/home/julien/dev/amazing-snippets/.makedoc/imgs/plot_contour_and_line_output.png" alt="drawing" class="center" width="400"/>
 >
 
 ---
@@ -25,4 +37,4 @@
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.5 on  03/12/22 19:03:00 
+<sub>This doc was automatically generated with makedoc v1.1.5 on  03/15/22 10:33:19 

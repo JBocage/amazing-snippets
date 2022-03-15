@@ -45,22 +45,17 @@ amazing-snippets/
 >It aims to function from every source directory. It is easy to use it. An sample of what is contained in the file is given here.
 >
 >```python
->
->root_path = pathlib.Path(os.path.abspath(os.path.join(__file__,'..',)))     # initialise the source path
->
->source_parser = DocParser(root_path,                                        # create the parser
->               ignored_dirs=['venv',
->                             '.git',
->                             '.idea',
->                             ],
->               )
->source_parser.makedoc(update_README=True,                                   # generate the doc
->                      )
->
->recursive_parser = DocParser(root_path.joinpath('src',),                    # another example of parser
->                            )
->recursive_parser.makedoc(recurse=True,                                      # another example of doc generation call
->                         verbose=False)
+>    source_parser = DocParser(root_path,
+>                   ignored_dirs=['venv',
+>                                 '.git',
+>                                 '.idea',
+>                                 ],
+>                   repack=True
+>                   )
+>    source_parser.makedoc(update_README=True,
+>                          generate_log_report=True,
+>                          recurse=True
+>                          )
 >```
 >
 >For adding figures, you need to put your figure in .makedoc/imgs
@@ -71,4 +66,4 @@ amazing-snippets/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.5 on  03/12/22 19:03:00 
+<sub>This doc was automatically generated with makedoc v1.1.5 on  03/15/22 10:33:19 

@@ -15,7 +15,8 @@ matplotlib/
 <hr style="border:2px solid gray"> </hr>
 
 ## 3D_plots
-
+>
+>This directory contains that generate quick or complex 3D plots.
 ---
 ## color_bar_integration.py
 >> source-url: https://matplotlib.org/3.5.1/gallery/subplots_axes_and_figures/colorbar_placement.html
@@ -27,7 +28,7 @@ matplotlib/
 >
 >A result example is given in the following figure.
 >
-><img src="/home/julien/dev/amazing-snippets/.makedoc/imgs/color_bar_integration_output.png" alt="drawing" width="400"/>
+><p align="center"><img src="/home/julien/dev/amazing-snippets/.makedoc/imgs/color_bar_integration_output.png" alt="drawing" class="center" width="400"/>
 >
 
 ---
@@ -35,4 +36,4 @@ matplotlib/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.5 on  03/12/22 19:03:00 
+<sub>This doc was automatically generated with makedoc v1.1.5 on  03/15/22 10:33:19 
