@@ -48,6 +48,8 @@ class DocParser():
                                               )))
     IGNORED_DIRS_FILENAME = 'ignored.mkdc'
     IMAGE_DIR = "doc/imgs"
+    IGNORED_EXTENSIONS = ["png",
+                          "csv"]
 
     class Log_message():
 
@@ -156,6 +158,12 @@ class DocParser():
                     return True
             return False
 
+        def check_ign_ext_list():
+            for ext in self.IGNORED_EXTENSIONS:
+                if re.search(ext+'$', self.name):
+                    return True
+            return False
+
         type = 'file' * int(self.is_file) + 'directory' * int(self.is_dir)
 
         if check_ign_dir_and_files_list():
@@ -189,6 +197,10 @@ class DocParser():
                     self.ignore_in_doc = True
                     self.ignore_in_struct = True
                     self.log_info(f'The file was recognised as a file to ignore.')
+                if check_ign_ext_list():
+                    self.ignore_in_doc = True
+                    self.log_info(f'The file extension was flagged to be ignored.')
+
 
     def pack_doc(self):
         if self.is_dir:
