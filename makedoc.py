@@ -49,7 +49,8 @@ class DocParser():
     IGNORED_DIRS_FILENAME = 'ignored.mkdc'
     IMAGE_DIR = "doc/imgs"
     IGNORED_EXTENSIONS = ["png",
-                          "csv"]
+                          "csv",
+                          "txt"]
 
     class Log_message():
 
