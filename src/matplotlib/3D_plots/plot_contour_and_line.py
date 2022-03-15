@@ -3,6 +3,10 @@
 
 This code is taken from the a github project and shows how to make a contour plot and to plot a line on the surface.
 
+The plotting code is
+
+@snip:plot_snip
+
 A result example is given in the following figure.
 
 @img:plot_contour_and_line_output.png
@@ -26,12 +30,14 @@ xline = np.linspace(-3, 0, 100)
 yline = np.linspace(4, 0, 100)
 zline = np.sin(np.sqrt(xline**2 + yline**2))
 
+# @begin:plot_snip
 # Plot the contour and the line.
 ax.contour3D(X, Y, Z,
-                    15,
-                    cmap = 'binary',
-                    )
+            15,
+            cmap = 'binary',
+            )
 ax.plot3D(xline, yline, zline, linewidth=5, c='b')
+# @end
 
 # Customize the z axis.
 ax.set_zlim(-1.01, 1.01)
