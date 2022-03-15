@@ -5,24 +5,7 @@ This script automatically generates the documentation skeleton for the project.
 
 It aims to function from every source directory. It is easy to use it. An sample of what is contained in the file is given here.
 
-```python
-
-root_path = pathlib.Path(os.path.abspath(os.path.join(__file__,'..',)))     # initialise the source path
-
-source_parser = DocParser(root_path,                                        # create the parser
-               ignored_dirs=['venv',
-                             '.git',
-                             '.idea',
-                             ],
-               )
-source_parser.makedoc(update_README=True,                                   # generate the doc
-                      )
-
-recursive_parser = DocParser(root_path.joinpath('src',),                    # another example of parser
-                            )
-recursive_parser.makedoc(recurse=True,                                      # another example of doc generation call
-                         verbose=False)
-```
+@snip:exemple_use
 
 For adding figures, you need to put your figure in .makedoc/imgs
 Then from any script command, you can include it by writing `@img:img_filename` at the beginning of the line
@@ -56,7 +39,7 @@ class DocParser():
     MAX_DIR_SIZE = 20 # files
     IGNORE_MARKER = 'autodoc.ignore'
 
-    VERSION = '1.1.5'
+    VERSION = '1.1.6'
 
     MAKEDOC_DIR_PATH = pathlib.Path(os.path.abspath(os.path.join(__file__,
                                                             '../.makedoc')))
@@ -74,13 +57,15 @@ class DocParser():
         def __init__(self,
                      type,
                      path,
-                     message):
+                     message,
+                     solution=''):
             if not type in [self.WARNING, self.INFO, self.ERROR]:
                 raise ValueError(f'Specified type is not valid.')
             self.type = type
             self.path = path
             self.time = datetime.datetime.now()
             self.message = message
+            self.solution=solution
 
         def __repr__(self):
             if self.type == self.ERROR:
@@ -134,7 +119,6 @@ class DocParser():
 
         if repack and self.is_first:
             self.pack_doc()
-            # self._erase_autodoc()
 
     def _init_makedoc_dir(self):
         self.MAKEDOC_DIR_PATH.mkdir(exist_ok=True)
@@ -238,20 +222,23 @@ class DocParser():
             file_children.sort(key=lambda x:x.name)
             self.children = dir_children + file_children
 
-    def log_warning(self, message):
+    def log_warning(self, message, solution=''):
         self.logs.append(self.Log_message(self.Log_message.WARNING,
                                           self.path,
-                                          message))
+                                          message,
+                                          solution=solution))
 
-    def log_info(self, message):
+    def log_info(self, message, solution=''):
         self.logs.append(self.Log_message(self.Log_message.INFO,
                                           self.path,
-                                          message))
+                                          message,
+                                          solution=solution))
 
-    def log_error(self, message):
+    def log_error(self, message, solution=''):
         self.logs.append(self.Log_message(self.Log_message.ERROR,
                                           self.path,
-                                          message))
+                                          message,
+                                          solution=solution))
 
     def _parse_doc(self):
         if not self.ignore_in_doc:
@@ -259,6 +246,7 @@ class DocParser():
                 self._parse_dirdoc()
             elif self.is_file:
                 if re.search(r'\.py$', self.name):
+                    # self._parse_as_py_file()
                     try:
                         self._parse_as_py_file()
                     except:
@@ -266,7 +254,7 @@ class DocParser():
                 elif re.search(r'\.md$', self.name):
                     self._parse_as_md_file()
                 else:
-                    self.log_warning('The file was ignored because its extenstion was not recognised.')
+                    self.log_warning('The file was ignored because its extention was not recognised.')
             else:
                 self.ignore_in_struct = True
                 self.ignore_in_doc = True
@@ -308,7 +296,7 @@ class DocParser():
                         if not end_name:
                             currently_parsed_snippets = []
                         elif end_name[1:] in currently_parsed_snippets:
-                            currently_parsed_snippets.pop(end_name[1:])
+                            currently_parsed_snippets.pop(currently_parsed_snippets.index(end_name[1:]))
                         else:
                             self.log_error(f'Wrong snippet name (got {end_name})')
                     if currently_parsed_snippets and not (snippet_begin_found or snippet_end_found):
@@ -316,24 +304,24 @@ class DocParser():
                             flagged_snippets[sname].append(l)
             if not info_began:
                 self.log_warning('There is not beginning comment to this file. The doc remains empty.')
-        if flagged_snippets:
-            print(flagged_snippets)
         for line in self.docstrings:
             if re.search(r'(?<=^@img:)\w+\.\w+', line):
                 img_name = re.search(r'(?<=^@img:)\w+\.\w+', line)[0]
                 img_dir_path=self.MAKEDOC_DIR_PATH.joinpath('imgs/')
                 if img_name in os.listdir(img_dir_path):
                     img_path = img_dir_path.joinpath(img_name)
-                    self.md_strings.append(f'<img src="{img_path.__str__()}" alt="drawing" width="400"/>\n')
+                    self.md_strings.append(f'<p align="center"><img src="{img_path.__str__()}" alt="drawing" class="center" width="400"/>\n')
                 else:
                     self.log_warning(f'Image named {img_name} was not found in {img_dir_path}.')
             elif re.search(r'(?<=^@snip:)\w+', line):
                 snip_name = re.search(r'(?<=^@snip:)\w+', line)[0]
-                print(snip_name)
                 if snip_name in flagged_snippets:
                     self.md_strings.append('```python\n')
                     self.md_strings+=flagged_snippets[snip_name]
                     self.md_strings.append('```\n')
+                else:
+                    self.log_warning(f"Snippet {snip_name} wasn't found in the code. But it is mentionned in the doc.",
+                                     solution="The flagged region in the code may not correspond. Check the typo")
             else:
                 self.md_strings.append(line)
 
@@ -367,7 +355,8 @@ class DocParser():
             for idx in popindexes[::-1]:
                 self.md_strings.pop(idx)
         if not self.md_strings:
-            self.log_warning('The directory doc is empty.')
+            self.log_warning('The directory doc is empty.',
+                             solution="Execute makedoc without the repack=False. Update dirdoc.md for the directory.")
 
     def _erase_autodoc(self, recurse=True):
         if self.is_dir:
@@ -513,21 +502,30 @@ class DocParser():
                         f.write(f"    ERROR #{errno+1}/{len(errors)}\n"
                                 f"            - file : {errorlog.path}\n"
                                 f"            - time : {errorlog.time.strftime('%D %H:%M:%S')}\n"
-                                f"        - msg : {errorlog.message} \n\n\n")
+                                f"        - msg : {errorlog.message}\n")
+                        if errorlog.solution:
+                            f.write(f"        - suggested solution : {errorlog.solution}\n")
+                        f.write("\n\n")
                     f.write(100*'-' + '\n\n')
                 if warnings:
                     for warno, warlog in enumerate(warnings):
                         f.write(f"    WARNING #{warno+1}/{len(warnings)}\n"
                                 f"            - file : {warlog.path}\n"
                                 f"            - time : {warlog.time.strftime('%D %H:%M:%S')}\n"
-                                f"        - msg : {warlog.message} \n\n\n")
+                                f"        - msg : {warlog.message}\n")
+                        if warlog.solution:
+                            f.write(f"        - suggested solution : {warlog.solution}\n")
+                        f.write("\n\n")
                     f.write(100*'-' + '\n\n')
                 if infos:
                     for infno, inflog in enumerate(infos):
                         f.write(f"    INFO #{infno+1}/{len(infos)}\n"
                                 f"            - file : {inflog.path}\n"
                                 f"            - time : {inflog.time.strftime('%D %H:%M:%S')}\n"
-                                f"        - msg : {inflog.message} \n\n\n")
+                                f"        - msg : {inflog.message}\n")
+                        if inflog.solution:
+                            f.write(f"        - suggested solution : {inflog.solution}\n")
+                        f.write("\n\n")
                     f.write(100*'-' + '\n\n')
                 for log in logs:
                     f.write(log.__str__() + '\n')
@@ -555,6 +553,7 @@ class DocParser():
 
 if __name__ == '__main__':
 
+# @begin:exemple_use
     source_parser = DocParser(root_path,
                    ignored_dirs=['venv',
                                  '.git',
@@ -566,3 +565,4 @@ if __name__ == '__main__':
                           generate_log_report=True,
                           recurse=True
                           )
+# @end:exemple_use
