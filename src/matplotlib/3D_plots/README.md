@@ -29,7 +29,7 @@ This directory contains that generate quick or complex 3D plots.
 >
 >A result example is given in the following figure.
 >
-><p align="center"><img src="./../../../imgs/plot_contour_and_line_output.png" alt="drawing" class="center" width="400"/>
+><p align="center"><img src="./../../../doc/imgs/plot_contour_and_line_output.png" alt="drawing" class="center" width="400"/>
 >
 
 ---
@@ -37,4 +37,4 @@ This directory contains that generate quick or complex 3D plots.
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 10:57:27 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 12:55:22 

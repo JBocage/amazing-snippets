@@ -16,10 +16,14 @@ src/
 │   └── merge_pdfs.py
 ├── markdown/
 │   └── cheat_sheet_1.md
-└── matplotlib/
-    ├── 3D_plots/
-    │   └── plot_contour_and_line.py
-    └── color_bar_integration.py
+├── matplotlib/
+│   ├── 3D_plots/
+│   │   └── plot_contour_and_line.py
+│   └── color_bar_integration.py
+└── pandas/
+    ├── data/
+    │   └── moscow_real_estate_sale.csv
+    └── make_categories.py
 ```
 
 <hr style="border:2px solid gray"> </hr>
@@ -46,8 +50,12 @@ src/
 >Well, the matplotlib website is really furnished, so you should definitely give it a chance. 
 >Plus the main part of the script you will find here come from there.
 ---
+## pandas
+>
+>This directory contains code snippets for quick pandas data treatment.
+---
 
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 10:57:27 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 12:55:22 

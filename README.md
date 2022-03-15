@@ -13,9 +13,10 @@ I hope you will like it !
 ## Structure 
 ```
 amazing-snippets/
-├── imgs/
-│   ├── color_bar_integration_output.png
-│   └── plot_contour_and_line_output.png
+├── doc/
+│   └── imgs/
+│       ├── color_bar_integration_output.png
+│       └── plot_contour_and_line_output.png
 ├── src/
 │   ├── colors/
 │   │   ├── colorbars/
@@ -27,17 +28,22 @@ amazing-snippets/
 │   │   └── merge_pdfs.py
 │   ├── markdown/
 │   │   └── cheat_sheet_1.md
-│   └── matplotlib/
-│       ├── 3D_plots/
-│       │   └── plot_contour_and_line.py
-│       └── color_bar_integration.py
+│   ├── matplotlib/
+│   │   ├── 3D_plots/
+│   │   │   └── plot_contour_and_line.py
+│   │   └── color_bar_integration.py
+│   └── pandas/
+│       ├── data/
+│       │   └── moscow_real_estate_sale.csv
+│       └── make_categories.py
 └── makedoc.py
 ```
 
 <hr style="border:2px solid gray"> </hr>
 
-## imgs
-
+## doc
+>
+>The **doc** directory contains all the documentation-related files.
 ---
 ## src
 >
@@ -72,4 +78,4 @@ amazing-snippets/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 10:57:27 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 12:55:22 
