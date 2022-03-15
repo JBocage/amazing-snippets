@@ -47,6 +47,7 @@ class DocParser():
                                               '..',
                                               )))
     IGNORED_DIRS_FILENAME = 'ignored.mkdc'
+    IMAGE_DIR = "imgs"
 
     class Log_message():
 
@@ -81,7 +82,7 @@ class DocParser():
                  ignored_dirs=[],
                  ignore___init__doc=True,
                  initialiser=True,
-                 repack=False
+                 repack=False,
                  ):
         self._init_makedoc_dir()
 
@@ -308,9 +309,10 @@ class DocParser():
             if re.search(r'(?<=^@img:)\w+\.\w+', line):
                 img_name = re.search(r'(?<=^@img:)\w+\.\w+', line)[0]
                 img_dir_path=self.MAKEDOC_DIR_PATH.joinpath('imgs/')
-                if img_name in os.listdir(img_dir_path):
-                    img_path = img_dir_path.joinpath(img_name)
-                    self.md_strings.append(f'<p align="center"><img src="{img_path.__str__()}" alt="drawing" class="center" width="400"/>\n')
+                rel_path_to_img='./' + '../'*(len(self._get_partial_path().split('/')) -2)+self.IMAGE_DIR+'/'+img_name
+                if img_name in os.listdir(root_path.joinpath(self.IMAGE_DIR)):
+                    self.md_strings.append(
+                        f'<p align="center"><img src="{rel_path_to_img}" alt="drawing" class="center" width="400"/>\n')
                 else:
                     self.log_warning(f'Image named {img_name} was not found in {img_dir_path}.')
             elif re.search(r'(?<=^@snip:)\w+', line):

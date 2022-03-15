@@ -13,6 +13,9 @@ I hope you will like it !
 ## Structure 
 ```
 amazing-snippets/
+├── imgs/
+│   ├── color_bar_integration_output.png
+│   └── plot_contour_and_line_output.png
 ├── src/
 │   ├── colors/
 │   │   ├── colorbars/
@@ -33,6 +36,9 @@ amazing-snippets/
 
 <hr style="border:2px solid gray"> </hr>
 
+## imgs
+
+---
 ## src
 >
 >The **src** directory basically contains all the code snippets of the project. This is where you will find all the useful stuff !
@@ -66,4 +72,4 @@ amazing-snippets/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.5 on  03/15/22 10:33:19 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 10:57:27 

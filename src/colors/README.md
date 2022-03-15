@@ -42,4 +42,4 @@ colors/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.5 on  03/15/22 10:33:19 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 10:57:27 

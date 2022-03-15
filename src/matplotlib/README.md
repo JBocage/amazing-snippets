@@ -28,7 +28,7 @@ matplotlib/
 >
 >A result example is given in the following figure.
 >
-><p align="center"><img src="/home/julien/dev/amazing-snippets/.makedoc/imgs/color_bar_integration_output.png" alt="drawing" class="center" width="400"/>
+><p align="center"><img src="./../../imgs/color_bar_integration_output.png" alt="drawing" class="center" width="400"/>
 >
 
 ---
@@ -36,4 +36,4 @@ matplotlib/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.5 on  03/15/22 10:33:19 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 10:57:27 
