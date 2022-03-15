@@ -7,8 +7,10 @@ This directory contains code snippets for quick pandas data treatment.
 ```
 pandas/
 ├── data/
-│   └── moscow_real_estate_sale.csv
-└── make_categories.py
+│   ├── moscow_real_estate_sale.csv
+│   └── rice_beef_coffee_price_changes.csv
+├── make_categories.py
+└── normalize.py
 ```
 
 <hr style="border:2px solid gray"> </hr>
@@ -25,7 +27,7 @@ pandas/
 >The snippet useful is
 >
 >```python
->COLUMN_TO_CATEGORIZE = 'metro'
+>COLUMN_TO_CATEGORIZE = 'way'
 >
 >import pandas as pd
 >df = pd.read_csv('./data/moscow_real_estate_sale.csv')
@@ -33,8 +35,26 @@ pandas/
 >```
 
 ---
+## normalize.py
+>> author: JBocage
+>
+>This script shows how to normalize pandas dataframes.
+>
+>For gaussian normalisation
+>
+>```python
+>gaussian_normalized_df=(df-df.mean())/df.std()
+>```
+>
+>For min-max normalisation
+>
+>```python
+>minmax_normalized_df=(df-df.min())/(df.max()-df.min())
+>```
+
+---
 
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 14:57:19 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 15:47:24 

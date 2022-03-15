@@ -28,9 +28,9 @@ colors/
 ## access_xkcd.py
 >> author: JBocage
 >
->This snippet provides a function that can be used to get codes of a huge colors_dict dataset.
+>This snippet provides a function that can be used to get codes of a huge colors dataset.
 >
->The available colors_dict are accessible at https://xkcd.com/color/rgb/
+>The available colors are accessible at https://xkcd.com/color/rgb/
 
 ---
 ## display_mpl_colors.py
@@ -52,7 +52,7 @@ colors/
 >Please enter a color name >greenish
 >```
 >
->If the color name is in the skcd color dataset,
+>If the color name is in the xkcd color dataset (cf https://xkcd.com/color/rgb/),
 >the plot is updated to display all the nearest colors in the rgb space that are contained in the xkcd dataset.
 >Then the script asks for a new color to be entered.
 >
@@ -61,8 +61,6 @@ colors/
 >```
 >Please enter a color name >stop
 >```
->
->To stop the process
 >
 >Exemple output :
 >
@@ -92,4 +90,4 @@ colors/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 14:57:19 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 15:47:24 

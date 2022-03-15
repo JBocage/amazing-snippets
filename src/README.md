@@ -24,8 +24,10 @@ src/
 │   └── color_bar_integration.py
 └── pandas/
     ├── data/
-    │   └── moscow_real_estate_sale.csv
-    └── make_categories.py
+    │   ├── moscow_real_estate_sale.csv
+    │   └── rice_beef_coffee_price_changes.csv
+    ├── make_categories.py
+    └── normalize.py
 ```
 
 <hr style="border:2px solid gray"> </hr>
@@ -60,4 +62,4 @@ src/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 14:57:19 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 15:47:24 
