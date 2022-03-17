@@ -8,20 +8,8 @@ This code is largely inspired from a snippet found on internet. It provides with
 
 To adapt this code for other uses, you can modify the config part (see below)
 
-```python
-################################
-########### Config #############
-################################
-verbose = True
+@snip:config
 
-inputs_path = pathlib.Path(os.path.abspath(os.path.join(__file__, '../input')))
-output_path = pathlib.Path(os.path.abspath(os.path.join(__file__, '../output')))
-
-sorting_key = lambda x:x
-
-outfilename = 'out' + '.pdf'
-################################
-```
 """
 import os
 import re
@@ -29,6 +17,7 @@ import re
 import PyPDF2
 import pathlib
 
+# @begin:config
 ################################
 ########### Config #############
 ################################
@@ -41,6 +30,7 @@ sorting_key = lambda x:x
 
 outfilename = 'out' + '.pdf'
 ################################
+# @end:config
 
 def merge_pdfs(inputs_path = inputs_path,
                output_path = output_path,

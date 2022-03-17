@@ -322,6 +322,15 @@ class DocParser():
                             flagged_snippets[sname].append(l)
             if not info_began:
                 self.log_warning('There is not beginning comment to this file. The doc remains empty.')
+        for snip in flagged_snippets.keys():
+            l = flagged_snippets[snip]
+            s=np.infty
+            for line in l:
+                s=min(s, len(line) - len(line.lstrip()))
+                if self.name == 'makedoc.py':
+                    print(s)
+            for i in range(len(l)):
+                l[i] = l[i][s:]
         for line in self.docstrings:
             if re.search(r'(?<=^@img:)\w+\.\w+', line):
                 img_name = re.search(r'(?<=^@img:)\w+\.\w+', line)[0]

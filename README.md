@@ -63,17 +63,17 @@ amazing-snippets/
 >It aims to function from every source directory. It is easy to use it. An sample of what is contained in the file is given here.
 >
 >```python
->    source_parser = DocParser(root_path,
->                   ignored_dirs=['venv',
->                                 '.git',
->                                 '.idea',
->                                 ],
->                   repack=True
->                   )
->    source_parser.makedoc(update_README=True,
->                          generate_log_report=True,
->                          recurse=True
->                          )
+>source_parser = DocParser(root_path,
+>               ignored_dirs=['venv',
+>                             '.git',
+>                             '.idea',
+>                             ],
+>               repack=True
+>               )
+>source_parser.makedoc(update_README=True,
+>                      generate_log_report=True,
+>                      recurse=True
+>                      )
 >```
 >
 >For adding figures, you need to put your figure in .makedoc/imgs
@@ -84,4 +84,4 @@ amazing-snippets/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/15/22 15:47:24 
+<sub>This doc was automatically generated with makedoc v1.1.6 on  03/17/22 18:17:24 
