@@ -39,7 +39,7 @@ class DocParser():
     MAX_DIR_SIZE = 20 # files
     IGNORE_MARKER = 'autodoc.ignore'
 
-    VERSION = '1.1.6'
+    VERSION = '1.1.7'
 
     MAKEDOC_DIR_PATH = pathlib.Path(os.path.abspath(os.path.join(__file__,
                                                             '../.makedoc')))
@@ -327,8 +327,6 @@ class DocParser():
             s=np.infty
             for line in l:
                 s=min(s, len(line) - len(line.lstrip()))
-                if self.name == 'makedoc.py':
-                    print(s)
             for i in range(len(l)):
                 l[i] = l[i][s:]
         for line in self.docstrings:
