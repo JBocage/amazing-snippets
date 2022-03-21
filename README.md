@@ -21,6 +21,10 @@ amazing-snippets/
 ├── src/
 │   ├── colors/
 │   │   ├── colorbars/
+│   │   │   ├── custom_bars/
+│   │   │   ├── input/
+│   │   │   ├── makebar_from_list.py
+│   │   │   └── makebar_from_screenshot.py
 │   │   ├── access_xkcd.py
 │   │   ├── display_mpl_colors.py
 │   │   ├── explore_xkcd_colors.py
@@ -84,4 +88,4 @@ amazing-snippets/
 
 
 
-<sub>This doc was automatically generated with makedoc v1.1.6 on  03/17/22 18:17:24 
+<sub>This doc was automatically generated with makedoc v1.1.7 on  03/21/22 16:16:40 

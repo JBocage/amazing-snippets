@@ -50,7 +50,8 @@ class DocParser():
     IMAGE_DIR = "doc/imgs"
     IGNORED_EXTENSIONS = ["png",
                           "csv",
-                          "txt"]
+                          "txt",
+                          "cmap"]
 
     class Log_message():
 
