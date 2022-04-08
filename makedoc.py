@@ -19,10 +19,13 @@ import time
 import datetime
 import sys
 import numpy as np
+import functools
 
 root_path = pathlib.Path(os.path.abspath(os.path.join(__file__,
                                                       '..',
                                                       )))
+
+open = functools.partial(open, encoding='utf8')
 
 class DocParser():
     DIRDOCNAME = 'dir_doc.md'
