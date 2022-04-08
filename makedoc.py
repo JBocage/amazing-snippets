@@ -41,6 +41,7 @@ class DocParser():
                     '.makedoc']
     MAX_DIR_SIZE = 20 # files
     IGNORE_MARKER = 'autodoc.ignore'
+    IGNORE_CONTENT_MARKER = 'autodoc.ignorecontent'
 
     VERSION = '1.1.7'
 
@@ -192,6 +193,12 @@ class DocParser():
                     os.remove(self.path.joinpath(self.IGNORE_MARKER))
                     with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'a') as f:
                         f.write('\n' + self.path._str)
+                elif self.IGNORE_CONTENT_MARKER in os.listdir(self.path):
+                    self.log_info(
+                        f'A {self.IGNORE_CONTENT_MARKER} was found in the directory. The marker was deleted and the .makedoc/{self.IGNORED_DIRS_FILENAME} file was updated.')
+                    os.remove(self.path.joinpath(self.IGNORE_CONTENT_MARKER))
+                    with open(self.MAKEDOC_DIR_PATH.joinpath(self.IGNORED_DIRS_FILENAME), 'a') as f:
+                        f.write('\n' + self.path._str + '/')
 
             elif self.is_file:
                 if self.ignore___init__doc and self.name == "__init__.py":
@@ -582,6 +589,8 @@ class DocParser():
             print("Makedoc process finished. The doc is ready.")
 
 if __name__ == '__main__':
+
+# TODO: solve snippet indenting problem
 
 # @begin:exemple_use
     source_parser = DocParser(root_path,
