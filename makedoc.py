@@ -335,11 +335,14 @@ class DocParser():
                 self.log_warning('There is not beginning comment to this file. The doc remains empty.')
         for snip in flagged_snippets.keys():
             l = flagged_snippets[snip]
-            s=np.infty
+            s = np.infty
             for line in l:
-                s=min(s, len(line) - len(line.lstrip()))
+                if line.strip():
+                    s = min(s, len(line) - len(line.lstrip()))
             for i in range(len(l)):
                 l[i] = l[i][s:]
+                if l[i] == '':
+                    l[i] = '\n'
         for line in self.docstrings:
             if re.search(r'(?<=^@img:)\w+\.\w+', line):
                 img_name = re.search(r'(?<=^@img:)\w+\.\w+', line)[0]
@@ -591,6 +594,7 @@ class DocParser():
 if __name__ == '__main__':
 
 # TODO: solve snippet indenting problem
+# TODO: solve empty lines in snippets problem
 
 # @begin:exemple_use
     source_parser = DocParser(root_path,
