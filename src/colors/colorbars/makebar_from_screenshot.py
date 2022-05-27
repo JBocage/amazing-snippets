@@ -52,9 +52,9 @@ def make_custom_cmap(colorlist,
     itrA = interp1d(interpaxis, carr[:, 3], kind=interp)
 
     for i, ratio in enumerate(np.linspace(0, 1, resolution)):
-        cinterp = [itrRED(ratio),
-                   itrGREEN(ratio),
-                   itrBLUE(ratio),
+        cinterp = [itrRED(ratio)/255,
+                   itrGREEN(ratio)/255,
+                   itrBLUE(ratio)/255,
                    itrA(ratio)
                    # 1
                    ]
@@ -66,10 +66,10 @@ def make_custom_cmap(colorlist,
     ax_cb = plt.subplot2grid((3, 1), (2, 0), fig=fig)
     colors = cm(np.linspace(0, 1, cm.N))
 
-    ax_c.plot([rgba[0]/255*100 for rgba in cmap_colorlist], c='red')
-    ax_c.plot([rgba[1]/255*100 for rgba in cmap_colorlist], c='green')
-    ax_c.plot([rgba[2]/255*100 for rgba in cmap_colorlist], c='blue')
-    ax_cb.imshow([colors[:,:3].astype(int)],
+    ax_c.plot([rgba[0]*100 for rgba in cmap_colorlist], c='red')
+    ax_c.plot([rgba[1]*100 for rgba in cmap_colorlist], c='green')
+    ax_c.plot([rgba[2]*100 for rgba in cmap_colorlist], c='blue')
+    ax_cb.imshow([(colors[:,:3]*255).astype(int)],
                  extent=[0, 10, 0, 1]
                  )
     ax_c.set_title('Custom cmap result')

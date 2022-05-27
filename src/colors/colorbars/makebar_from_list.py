@@ -29,11 +29,21 @@ plt.ioff()
 # @begin:config_part
 save_path = pathlib.Path(os.path.abspath(os.path.join(__file__, '../custom_bars')))
 
+# clist = [
+#     (0, 'white'),
+#     (.2, 'orange'),
+#     (.3,'blue'),
+#     (1, 'black'),
+# ]
+
+thresh = 220
 clist = [
-    (0, 'white'),
-    (.2, 'orange'),
-    (.3,'blue'),
-    (1, 'black'),
+    (0, 'black'),
+    ((thresh-1)/255, 'white'),
+    ((thresh-0.5)/255, 'coral pink'),
+    (253.2/255, 'coral pink'),
+    (254/255, 'white'),
+    (1, 'white')
 ]
 
 interpolation_mode='linear'
@@ -50,10 +60,11 @@ def make_custom_cmap(colorlist = clist,
     itrA = interp1d(carr[:, 0], carr[:, 4], kind=interp)
 
     for i, ratio in enumerate(np.linspace(0, 1, resolution)):
-        cinterp = [itrRED(ratio),
-                   itrGREEN(ratio),
-                   itrBLUE(ratio),
-                   itrA(ratio)]
+        cinterp = [itrRED(ratio)/255,
+                   itrGREEN(ratio)/255,
+                   itrBLUE(ratio)/255,
+                   itrA(ratio),
+                   ]
         cmap_colorlist.append(cinterp)
 
     cm = mcl.ListedColormap(cmap_colorlist)
@@ -62,10 +73,10 @@ def make_custom_cmap(colorlist = clist,
     ax_cb = plt.subplot2grid((3, 1), (2, 0), fig=fig)
     colors = cm(np.linspace(0, 1, cm.N))
 
-    ax_c.plot([rgba[0]/255*100 for rgba in cmap_colorlist], c='red')
-    ax_c.plot([rgba[1]/255*100 for rgba in cmap_colorlist], c='green')
-    ax_c.plot([rgba[2]/255*100 for rgba in cmap_colorlist], c='blue')
-    ax_cb.imshow([colors[:,:3].astype(int)],
+    ax_c.plot([rgba[0]*100 for rgba in cmap_colorlist], c='red')
+    ax_c.plot([rgba[1]*100 for rgba in cmap_colorlist], c='green')
+    ax_c.plot([rgba[2]*100 for rgba in cmap_colorlist], c='blue')
+    ax_cb.imshow([(colors[:,:3]*255).astype(int)],
                  extent=[0, 10, 0, 1]
                  )
     ax_c.set_title('Custom cmap result')
@@ -88,10 +99,11 @@ def make_custom_cmap(colorlist = clist,
         save_path.mkdir(exist_ok=True,
                         parents=True)
         joblib.dump(cm, save_path.joinpath(svnm + '.cmap'))
+        print("cmap saved in:",save_path.joinpath(svnm + '.cmap').absolute())
 
     return cm
 
 if __name__=='__main__':
-    cmap = np.array(make_custom_cmap(
+    cmap = make_custom_cmap(
         interp=interpolation_mode
-    ))
+    )
